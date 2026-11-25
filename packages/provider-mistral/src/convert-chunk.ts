@@ -14,6 +14,8 @@ import type {
 /**
  * Converts one Mistral chat stream event to a provider-agnostic chunk. Returns
  * null for events that carry nothing usable. Usage arrives on the final event.
+ * Reasoning content is dropped, but still yields an empty chunk: the response
+ * deadline and the host's idle watchdog must see that the model is working.
  */
 export const convertChunk = (
   event: CompletionEvent,
@@ -24,6 +26,7 @@ export const convertChunk = (
 
   const choice = event.data.choices.at(0);
   if (choice) {
+    carriesSomething = hasThinking(choice.delta.content);
     const textDelta = extractTextDelta(choice.delta.content);
     if (textDelta) {
       result.textDelta = textDelta;
@@ -67,6 +70,11 @@ const extractTextDelta = (
   }
   return content;
 };
+
+const hasThinking = (
+  content: string | ContentChunk[] | null | undefined,
+): boolean =>
+  Array.isArray(content) && content.some((c) => c.type === 'thinking');
 
 const extractToolCallDeltas = (
   toolCalls: ToolCall[] | null | undefined,

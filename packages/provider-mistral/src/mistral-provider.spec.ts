@@ -1,5 +1,8 @@
-import type { CompletionEvent } from '@mistralai/mistralai/models/components';
-import { ModelProviderError } from '@ayunis/inference';
+import {
+  CompletionEvent$inboundSchema,
+  type CompletionEvent,
+} from '@mistralai/mistralai/models/components';
+import { ModelProviderError, type ProviderChunk } from '@ayunis/inference';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { mistral } from './mistral-provider';
@@ -318,6 +321,56 @@ describe('mistral', () => {
 
     await assertion;
     expect(read).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not time out a model that is still thinking at the deadline', async () => {
+    vi.useFakeTimers();
+    const thinkingEvent = CompletionEvent$inboundSchema.parse({
+      data: JSON.stringify({
+        id: 'chatcmpl-thinking',
+        model: 'zai-glm-5-3',
+        choices: [
+          {
+            index: 0,
+            delta: {
+              content: [
+                {
+                  type: 'thinking',
+                  thinking: [{ type: 'text', text: 'Weighing options' }],
+                },
+              ],
+            },
+            finish_reason: null,
+          },
+        ],
+      }),
+    });
+    const events = [thinkingEvent, thinkingEvent, thinkingEvent, textEvent];
+    mistralSdk.stream.mockResolvedValue(
+      sdkStream(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        const value = events.shift();
+        return value
+          ? { done: false, value }
+          : { done: true, value: undefined };
+      }),
+    );
+    const provider = mistral({
+      apiKey: 'sk-test',
+      model: 'zai-glm-5-3',
+      timeoutMs: 1_000,
+    });
+    const chunks: ProviderChunk[] = [];
+    const consumed = (async () => {
+      for await (const chunk of provider.stream(request)) chunks.push(chunk);
+    })();
+    const assertion = expect(consumed).resolves.toBeUndefined();
+
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    await assertion;
+    // Reasoning stays hidden, but each event reaches the host's idle watchdog.
+    expect(chunks).toEqual([{}, {}, {}, { textDelta: 'hello' }]);
   });
 
   it('lets an established stream keep producing past the timeout', async () => {
