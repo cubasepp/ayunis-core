@@ -7607,6 +7607,22 @@ export interface LogoutResponseDto {
   brokerLogoutUrl: string | null;
 }
 
+export interface ModelSuggestionResponseDto {
+  /** Provider model identifier to store in the catalog */
+  name: string;
+  displayName: string;
+  contextWindowSize: number;
+  canUseTools: boolean;
+  canVision: boolean;
+  isReasoning: boolean;
+  /** Whether the catalog already has a language model for it */
+  isInCatalog: boolean;
+  /** Estimated cost per million input tokens in EUR. Absent when no price could be determined. */
+  inputTokenCost?: number;
+  /** Estimated cost per million output tokens in EUR. Absent when no price could be determined. */
+  outputTokenCost?: number;
+}
+
 export type SuperAdminOrgsControllerGetAllOrgsParams = {
 /**
  * Filter by derived lifecycle status: archived, then paying, then expired, then trial, otherwise no-plan

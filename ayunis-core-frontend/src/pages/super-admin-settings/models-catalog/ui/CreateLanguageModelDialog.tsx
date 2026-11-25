@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useCreateLanguageModel } from '@/pages/super-admin-settings/models-catalog/api/useCreateLanguageModel';
 import type { LanguageModelFormData } from '@/pages/super-admin-settings/models-catalog/model/types';
@@ -12,6 +12,7 @@ import { LanguageModelDescriptionField } from './LanguageModelDescriptionField';
 import { LanguageModelContextWindowSizeField } from './LanguageModelContextWindowSizeField';
 import { ModelPricingFields } from './ModelPricingFields';
 import { ModelCheckboxField } from './ModelCheckboxField';
+import { MistralModelPicker } from './MistralModelPicker';
 
 interface CreateLanguageModelDialogProps {
   open: boolean;
@@ -48,6 +49,8 @@ export function CreateLanguageModelDialog({
     },
   );
 
+  const provider = useWatch({ control: form.control, name: 'provider' });
+
   const handleSubmit = (data: LanguageModelFormData) => {
     createLanguageModel(normalizeLanguageModelFormData(data));
   };
@@ -66,6 +69,11 @@ export function CreateLanguageModelDialog({
       displayNamePlaceholder={t(
         'models.catalog.dialog.languageDisplayNamePlaceholder',
       )}
+      providerExtras={
+        provider === 'mistral' && (
+          <MistralModelPicker form={form} disabled={isCreating} />
+        )
+      }
     >
       <LanguageModelTierField form={form} disabled={isCreating} />
       <LanguageModelDescriptionField form={form} disabled={isCreating} />

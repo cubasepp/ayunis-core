@@ -1,5 +1,8 @@
 import { registerAs } from '@nestjs/config';
 
+const optionalValue = (value: string | undefined): string | undefined =>
+  value?.trim() || undefined;
+
 // Evaluated lazily inside the registerAs factory so env vars are read after
 // ConfigModule has loaded .env files.
 const mistralConfig = () => ({
@@ -12,10 +15,16 @@ const mistralConfig = () => ({
     process.env.MISTRAL_TRANSCRIPTION_MODEL?.trim() || 'voxtral-mini-2602',
   ttsModel: process.env.MISTRAL_TTS_MODEL?.trim() || 'voxtral-mini-tts-3-0',
   speechServerUrl: process.env.MISTRAL_SPEECH_SERVER_URL?.trim() || undefined,
+  modelsServerUrl: optionalValue(process.env.MISTRAL_MODELS_SERVER_URL),
+});
+
+const priceSuggestionConfig = () => ({
+  usdToEurRate: optionalValue(process.env.MODEL_PRICE_USD_TO_EUR_RATE),
 });
 
 export const modelsConfig = registerAs('models', () => ({
   mistral: mistralConfig(),
+  priceSuggestion: priceSuggestionConfig(),
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
   },

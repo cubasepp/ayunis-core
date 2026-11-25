@@ -103,6 +103,7 @@ const EXCEPTION_FACTORIES: Record<
   410: (body) => new GoneException(body),
   413: (body) => new PayloadTooLargeException(body),
   422: (body) => new UnprocessableEntityException(body),
+  424: (body) => new HttpException(body, HttpStatus.FAILED_DEPENDENCY),
   // Nest ships no TooManyRequestsException; use the generic base.
   429: (body) => new HttpException(body, HttpStatus.TOO_MANY_REQUESTS),
   500: (body) => new InternalServerErrorException(body),

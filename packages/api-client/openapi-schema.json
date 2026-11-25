@@ -16433,6 +16433,39 @@
         "summary": "Remove an integration from a routine",
         "tags": ["routines"]
       }
+    },
+    "/super-admin/models/suggestions/mistral": {
+      "get": {
+        "description": "Lists the chat models of Mistral's EU endpoint with their capabilities and, if configured, an estimated price. Nothing is saved.",
+        "operationId": "SuperAdminModelSuggestionsController_getMistralModelSuggestions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModelSuggestionResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated or not authorized as super admin"
+          },
+          "422": {
+            "description": "Mistral is not configured"
+          },
+          "424": {
+            "description": "Mistral could not list models"
+          }
+        },
+        "summary": "Get Mistral models to prefill a catalog entry",
+        "tags": ["Super Admin Models"]
+      }
     }
   },
   "info": {
@@ -28792,6 +28825,60 @@
           "voice"
         ],
         "description": "Scopes granted to the current token surface. Empty for browser sessions."
+      },
+      "ModelSuggestionResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Provider model identifier to store in the catalog",
+            "example": "zai-glm-5-3"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "GLM 5.3"
+          },
+          "contextWindowSize": {
+            "type": "integer",
+            "example": 1048576
+          },
+          "canUseTools": {
+            "type": "boolean",
+            "example": true
+          },
+          "canVision": {
+            "type": "boolean",
+            "example": false
+          },
+          "isReasoning": {
+            "type": "boolean",
+            "example": true
+          },
+          "isInCatalog": {
+            "type": "boolean",
+            "description": "Whether the catalog already has a language model for it",
+            "example": false
+          },
+          "inputTokenCost": {
+            "type": "number",
+            "description": "Estimated cost per million input tokens in EUR. Absent when no price could be determined.",
+            "example": 1.32
+          },
+          "outputTokenCost": {
+            "type": "number",
+            "description": "Estimated cost per million output tokens in EUR. Absent when no price could be determined.",
+            "example": 4.15
+          }
+        },
+        "required": [
+          "name",
+          "displayName",
+          "contextWindowSize",
+          "canUseTools",
+          "canVision",
+          "isReasoning",
+          "isInCatalog"
+        ]
       }
     }
   }

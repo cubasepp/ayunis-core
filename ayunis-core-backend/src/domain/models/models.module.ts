@@ -61,6 +61,13 @@ import { AzureInferenceProviderFactory } from './infrastructure/inference-provid
 import { BedrockInferenceProviderFactory } from './infrastructure/inference-providers/bedrock.inference-provider';
 import { GeminiInferenceProviderFactory } from './infrastructure/inference-providers/gemini.inference-provider';
 import { LocalOllamaInferenceProviderFactory } from './infrastructure/inference-providers/local-ollama.inference-provider';
+import { GetMistralModelSuggestionsUseCase } from 'src/domain/models/application/use-cases/get-mistral-model-suggestions/get-mistral-model-suggestions.use-case';
+import { ModelPriceSuggestionService } from 'src/domain/models/application/services/model-price-suggestion.service';
+import { MistralModelCatalog } from 'src/domain/models/application/ports/mistral-model-catalog';
+import { ModelPriceList } from 'src/domain/models/application/ports/model-price-list';
+import { SdkMistralModelCatalog } from 'src/domain/models/infrastructure/model-catalogs/sdk-mistral-model-catalog';
+import { ModelsDevPriceList } from 'src/domain/models/infrastructure/price-lists/models-dev-price-list';
+import { SuperAdminModelSuggestionsController } from 'src/domain/models/presenters/http/super-admin-model-suggestions.controller';
 import { MistralInferenceProviderFactory } from './infrastructure/inference-providers/mistral.inference-provider';
 import { OpenAIInferenceProviderFactory } from './infrastructure/inference-providers/openai.inference-provider';
 import { OtcInferenceProviderFactory } from './infrastructure/inference-providers/otc.inference-provider';
@@ -132,6 +139,7 @@ import { ResolveRecordingSummaryModelUseCase } from './application/use-cases/res
     TeamPermittedModelsController,
     SuperAdminPermittedModelsController,
     SuperAdminCatalogModelsController,
+    SuperAdminModelSuggestionsController,
     SuperAdminModelModesController,
     ModelModesController,
     ModelModeDefaultsController,
@@ -212,6 +220,10 @@ import { ResolveRecordingSummaryModelUseCase } from './application/use-cases/res
       ],
     },
     InferenceCallService,
+    { provide: MistralModelCatalog, useClass: SdkMistralModelCatalog },
+    { provide: ModelPriceList, useClass: ModelsDevPriceList },
+    ModelPriceSuggestionService,
+    GetMistralModelSuggestionsUseCase,
     AzureImageGenerationHandler,
     MockImageGenerationHandler,
     {

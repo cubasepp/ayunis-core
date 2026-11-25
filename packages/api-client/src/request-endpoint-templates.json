@@ -221,6 +221,7 @@
   "/super-admin/models/catalog/language",
   "/super-admin/models/catalog/language/{id}",
   "/super-admin/models/catalog/{id}",
+  "/super-admin/models/suggestions/mistral",
   "/super-admin/models/{orgId}/available/embedding",
   "/super-admin/models/{orgId}/available/image-generation",
   "/super-admin/models/{orgId}/available/language",

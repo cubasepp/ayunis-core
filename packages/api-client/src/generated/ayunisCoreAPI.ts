@@ -166,6 +166,7 @@ import type {
   ModelModeEntryDto,
   ModelModeResolutionResponseDto,
   ModelProviderInfoResponseDto,
+  ModelSuggestionResponseDto,
   ModelWithConfigResponseDto,
   MyPermissionsResponseDto,
   MyTeamResponseDto,
@@ -35264,4 +35265,98 @@ export const useRoutineMcpIntegrationsControllerRemove = <TError = void,
       > => {
       return useMutation(getRoutineMcpIntegrationsControllerRemoveMutationOptions(options), queryClient);
     }
+
+/**
+ * Lists the chat models of Mistral's EU endpoint with their capabilities and, if configured, an estimated price. Nothing is saved.
+ * @summary Get Mistral models to prefill a catalog entry
+ */
+export const superAdminModelSuggestionsControllerGetMistralModelSuggestions = (
+
+ signal?: AbortSignal
+) => {
+
+
+      return customAxiosInstance<ModelSuggestionResponseDto[]>(
+      {url: `/super-admin/models/suggestions/mistral`, method: 'GET', signal
+    },
+      );
+    }
+
+
+
+
+export const getSuperAdminModelSuggestionsControllerGetMistralModelSuggestionsQueryKey = () => {
+    return [
+    `/super-admin/models/suggestions/mistral`
+    ] as const;
+    }
+
+
+export const getSuperAdminModelSuggestionsControllerGetMistralModelSuggestionsQueryOptions = <TData = Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSuperAdminModelSuggestionsControllerGetMistralModelSuggestionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>> = ({ signal }) => superAdminModelSuggestionsControllerGetMistralModelSuggestions(signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SuperAdminModelSuggestionsControllerGetMistralModelSuggestionsQueryResult = NonNullable<Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>>
+export type SuperAdminModelSuggestionsControllerGetMistralModelSuggestionsQueryError = void
+
+
+export function useSuperAdminModelSuggestionsControllerGetMistralModelSuggestions<TData = Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>,
+          TError,
+          Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSuperAdminModelSuggestionsControllerGetMistralModelSuggestions<TData = Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>,
+          TError,
+          Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSuperAdminModelSuggestionsControllerGetMistralModelSuggestions<TData = Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Mistral models to prefill a catalog entry
+ */
+
+export function useSuperAdminModelSuggestionsControllerGetMistralModelSuggestions<TData = Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof superAdminModelSuggestionsControllerGetMistralModelSuggestions>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSuperAdminModelSuggestionsControllerGetMistralModelSuggestionsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 

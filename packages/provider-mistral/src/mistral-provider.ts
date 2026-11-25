@@ -1,5 +1,4 @@
-import { Mistral } from '@mistralai/mistralai';
-import type { RetryConfig } from '@mistralai/mistralai/lib/retries';
+import type { Mistral } from '@mistralai/mistralai';
 import type { ChatCompletionStreamRequest } from '@mistralai/mistralai/models/components';
 
 import type {
@@ -20,6 +19,7 @@ import {
   convertTool,
   convertToolChoice,
 } from './convert-request';
+import { createMistralClient } from './mistral-client';
 
 // Bounds only how long the response may take to start (first event), like the
 // OpenAI and Anthropic providers. Consumption is unbounded here: long
@@ -49,36 +49,10 @@ export interface MistralProviderOptions {
  */
 export const mistral = (options: MistralProviderOptions): ModelProvider => {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const client = new Mistral({
-    apiKey: options.apiKey,
-    server: 'eu',
-    ...(options.baseUrl ? { serverURL: options.baseUrl } : {}),
-    retryConfig: toRetryConfig(options.maxRetries ?? 0),
-  });
+  const client = createMistralClient(options);
   return {
     name: `mistral:${options.model}`,
     stream: (request) => streamChat(client, options.model, request, timeoutMs),
-  };
-};
-
-/**
- * Mistral expresses retries as a time-budgeted exponential backoff rather than
- * a fixed attempt count, so the runtime's `maxRetries` is translated into an
- * elapsed-time budget that allows roughly that many transient-failure retries.
- */
-const toRetryConfig = (maxRetries: number): RetryConfig => {
-  if (maxRetries <= 0) {
-    return { strategy: 'none' };
-  }
-  return {
-    strategy: 'backoff',
-    backoff: {
-      initialInterval: 1000,
-      maxInterval: 10000,
-      exponent: 2,
-      maxElapsedTime: maxRetries * 20000,
-    },
-    retryConnectionErrors: true,
   };
 };
 

@@ -50,6 +50,8 @@ interface ModelFormDialogProps<T extends BaseModelFormData> {
   providers: readonly ProviderOption[];
   namePlaceholder: string;
   displayNamePlaceholder: string;
+  /** Rendered directly below the provider select */
+  providerExtras?: ReactNode;
   /** Extra fields rendered between displayName and isArchived */
   children?: ReactNode;
   /** When false, DialogContent is not rendered (used by edit dialogs when model is null) */
@@ -67,6 +69,7 @@ export function ModelFormDialog<T extends BaseModelFormData>({
   providers,
   namePlaceholder,
   displayNamePlaceholder,
+  providerExtras,
   children,
   hasContent = true,
 }: Readonly<ModelFormDialogProps<T>>) {
@@ -154,6 +157,8 @@ export function ModelFormDialog<T extends BaseModelFormData>({
                     </FormItem>
                   )}
                 />
+
+                {providerExtras}
 
                 <FormField
                   control={form.control}
