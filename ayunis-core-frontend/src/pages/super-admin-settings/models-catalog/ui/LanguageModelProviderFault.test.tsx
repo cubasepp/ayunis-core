@@ -33,6 +33,17 @@ vi.mock(
   }),
 );
 
+vi.mock(
+  '@/pages/super-admin-settings/models-catalog/api/useModelSuggestions',
+  () => ({
+    useModelSuggestions: () => ({
+      suggestions: [],
+      isLoading: false,
+      errorCode: undefined,
+    }),
+  }),
+);
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));

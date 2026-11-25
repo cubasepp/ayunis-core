@@ -9,21 +9,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@ayunis/ui/components/select';
-import { useMistralModelSuggestions } from '@/pages/super-admin-settings/models-catalog/api/useMistralModelSuggestions';
+import { useModelSuggestions } from '@/pages/super-admin-settings/models-catalog/api/useModelSuggestions';
 import { applyModelSuggestion } from '@/pages/super-admin-settings/models-catalog/lib/apply-model-suggestion';
 import type { LanguageModelFormData } from '@/pages/super-admin-settings/models-catalog/model/types';
 
-interface MistralModelPickerProps {
+interface ModelSuggestionPickerProps {
+  provider: LanguageModelFormData['provider'];
   form: UseFormReturn<LanguageModelFormData>;
   disabled: boolean;
 }
 
-export function MistralModelPicker({
+export function ModelSuggestionPicker({
+  provider,
   form,
   disabled,
-}: Readonly<MistralModelPickerProps>) {
+}: Readonly<ModelSuggestionPickerProps>) {
   const { t } = useTranslation('super-admin-settings-org');
-  const { suggestions, isLoading, errorCode } = useMistralModelSuggestions();
+  const { suggestions, isLoading, errorCode } = useModelSuggestions(provider);
   const name = useWatch({ control: form.control, name: 'name' });
   const selected = suggestions.find((suggestion) => suggestion.name === name);
 
@@ -35,34 +37,37 @@ export function MistralModelPicker({
     });
   };
 
+  if (isLoading || (suggestions.length === 0 && errorCode === undefined)) {
+    return null;
+  }
+
   const hint = () => {
     if (errorCode === 'PROVIDER_MODEL_LIST_NOT_CONFIGURED') {
-      return t('models.catalog.dialog.mistralModel.notConfigured');
+      return t('models.catalog.dialog.modelSuggestion.notConfigured');
     }
-    if (errorCode) return t('models.catalog.dialog.mistralModel.loadFailed');
-    if (!selected) return t('models.catalog.dialog.mistralModel.hint');
+    if (errorCode) return t('models.catalog.dialog.modelSuggestion.loadFailed');
+    if (!selected) return t('models.catalog.dialog.modelSuggestion.hint');
     return selected.inputTokenCost === undefined
-      ? t('models.catalog.dialog.mistralModel.noPrice')
-      : t('models.catalog.dialog.mistralModel.priceEstimate');
+      ? t('models.catalog.dialog.modelSuggestion.noPrice')
+      : t('models.catalog.dialog.modelSuggestion.priceEstimate');
   };
 
   return (
     <div className="grid gap-2">
-      <Label htmlFor="mistral-model">
-        {t('models.catalog.dialog.mistralModel.label')}
+      <Label htmlFor="model-suggestion">
+        {t('models.catalog.dialog.modelSuggestion.label')}
       </Label>
       <Select
         value={selected?.name ?? ''}
         onValueChange={handleSelect}
-        disabled={disabled || isLoading || errorCode !== undefined}
+        disabled={disabled || errorCode !== undefined}
       >
-        <SelectTrigger id="mistral-model" data-testid="model-catalog-mistral">
+        <SelectTrigger
+          id="model-suggestion"
+          data-testid="model-catalog-suggestion"
+        >
           <SelectValue
-            placeholder={t(
-              isLoading
-                ? 'models.catalog.dialog.mistralModel.loading'
-                : 'models.catalog.dialog.mistralModel.placeholder',
-            )}
+            placeholder={t('models.catalog.dialog.modelSuggestion.placeholder')}
           />
         </SelectTrigger>
         <SelectContent>
@@ -74,7 +79,7 @@ export function MistralModelPicker({
             >
               {suggestion.displayName} ({suggestion.name})
               {suggestion.isInCatalog &&
-                ` · ${t('models.catalog.dialog.mistralModel.inCatalog')}`}
+                ` · ${t('models.catalog.dialog.modelSuggestion.inCatalog')}`}
             </SelectItem>
           ))}
         </SelectContent>

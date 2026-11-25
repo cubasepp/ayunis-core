@@ -1,7 +1,8 @@
 import type { ConfigService } from '@nestjs/config';
-import { GetMistralModelSuggestionsUseCase } from './get-mistral-model-suggestions.use-case';
+import { GetModelSuggestionsUseCase } from './get-model-suggestions.use-case';
+import { ProviderModelCatalogRegistry } from 'src/domain/models/application/registry/provider-model-catalog.registry';
 import { ModelPriceSuggestionService } from 'src/domain/models/application/services/model-price-suggestion.service';
-import type { MistralModelCatalog } from 'src/domain/models/application/ports/mistral-model-catalog';
+import type { ProviderModelCatalog } from 'src/domain/models/application/ports/provider-model-catalog';
 import type { ModelPriceList } from 'src/domain/models/application/ports/model-price-list';
 import type { ModelsRepository } from 'src/domain/models/application/ports/models.repository';
 import type { ProviderModelListing } from 'src/domain/models/application/models/provider-model-listing';
@@ -54,7 +55,7 @@ const MISTRAL_LISTINGS = [
   },
 ];
 
-describe('GetMistralModelSuggestionsUseCase', () => {
+describe('GetModelSuggestionsUseCase', () => {
   const setup = ({
     config = {},
     catalogNames = [] as string[],
@@ -72,9 +73,12 @@ describe('GetMistralModelSuggestionsUseCase', () => {
     const configService = {
       get: (key: string) => values[key],
     } as ConfigService;
-    const catalog: MistralModelCatalog = {
+    const catalog: ProviderModelCatalog = {
+      isConfigured: () => !!values['models.mistral.apiKey'],
       list: jest.fn().mockResolvedValue(MISTRAL_LISTINGS),
     };
+    const registry = new ProviderModelCatalogRegistry();
+    registry.register(ModelProvider.MISTRAL, catalog);
     const repository = {
       findAll: jest.fn().mockResolvedValue(
         catalogNames.map(
@@ -97,17 +101,16 @@ describe('GetMistralModelSuggestionsUseCase', () => {
     return {
       catalog,
       priceList,
-      useCase: new GetMistralModelSuggestionsUseCase(
-        catalog,
+      useCase: new GetModelSuggestionsUseCase(
+        registry,
         repository,
         new ModelPriceSuggestionService(prices, configService),
-        configService,
       ),
     };
   };
 
   it('suggests each chat model once, under a fixed version instead of a moving alias', async () => {
-    const suggestions = await setup().useCase.execute();
+    const suggestions = await setup().useCase.execute(ModelProvider.MISTRAL);
 
     expect(suggestions.map((s) => [s.name, s.displayName])).toEqual([
       ['zai-glm-5-2', 'GLM 5.2'],
@@ -118,13 +121,15 @@ describe('GetMistralModelSuggestionsUseCase', () => {
   it('marks a model as in the catalog when it was added under an alias', async () => {
     const { useCase } = setup({ catalogNames: ['zai-glm-latest'] });
 
-    const suggestions = await useCase.execute();
+    const suggestions = await useCase.execute(ModelProvider.MISTRAL);
 
     expect(suggestions.map((s) => s.isInCatalog)).toEqual([false, true]);
   });
 
   it('converts the USD list price to EUR including the regional surcharge', async () => {
-    const [unpriced, priced] = await setup().useCase.execute();
+    const [unpriced, priced] = await setup().useCase.execute(
+      ModelProvider.MISTRAL,
+    );
 
     expect(priced.price).toEqual({
       inputTokenCost: 1.386,
@@ -140,7 +145,7 @@ describe('GetMistralModelSuggestionsUseCase', () => {
         config: { 'models.priceSuggestion.usdToEurRate': rate },
       });
 
-      const suggestions = await useCase.execute();
+      const suggestions = await useCase.execute(ModelProvider.MISTRAL);
 
       expect(suggestions.every((s) => s.price === undefined)).toBe(true);
       expect(priceList).not.toHaveBeenCalled();
@@ -152,7 +157,7 @@ describe('GetMistralModelSuggestionsUseCase', () => {
       priceList: jest.fn().mockRejectedValue(new Error('offline')),
     });
 
-    const suggestions = await useCase.execute();
+    const suggestions = await useCase.execute(ModelProvider.MISTRAL);
 
     expect(suggestions).toHaveLength(2);
     expect(suggestions.every((s) => s.price === undefined)).toBe(true);
@@ -162,7 +167,9 @@ describe('GetMistralModelSuggestionsUseCase', () => {
     const { useCase, catalog } = setup();
     jest.mocked(catalog.list).mockRejectedValue(new Error('503 from Mistral'));
 
-    const error = await useCase.execute().catch((e: unknown) => e);
+    const error = await useCase
+      .execute(ModelProvider.MISTRAL)
+      .catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ProviderModelListFailedError);
     const response = (error as ProviderModelListFailedError).toHttpException();
@@ -177,8 +184,14 @@ describe('GetMistralModelSuggestionsUseCase', () => {
       config: { 'models.mistral.apiKey': undefined },
     });
 
-    await expect(useCase.execute()).rejects.toThrow(
+    await expect(useCase.execute(ModelProvider.MISTRAL)).rejects.toThrow(
       ProviderModelListNotConfiguredError,
     );
+  });
+
+  it('suggests nothing for a provider that cannot list its models', async () => {
+    const { useCase } = setup();
+
+    await expect(useCase.execute(ModelProvider.OPENAI)).resolves.toEqual([]);
   });
 });

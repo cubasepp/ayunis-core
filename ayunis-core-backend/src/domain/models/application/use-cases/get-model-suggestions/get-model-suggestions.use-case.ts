@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { HandleUnexpectedErrors } from 'src/common/decorators/handle-unexpected-errors.decorator';
-import { MistralModelCatalog } from 'src/domain/models/application/ports/mistral-model-catalog';
+import type { ProviderModelCatalog } from 'src/domain/models/application/ports/provider-model-catalog';
+import { ProviderModelCatalogRegistry } from 'src/domain/models/application/registry/provider-model-catalog.registry';
 import { ModelsRepository } from 'src/domain/models/application/ports/models.repository';
 import { ModelPriceSuggestionService } from 'src/domain/models/application/services/model-price-suggestion.service';
 import { groupModelListings } from 'src/domain/models/application/helpers/group-model-listings.helper';
@@ -17,23 +17,24 @@ import {
 } from 'src/domain/models/application/model-suggestion.errors';
 
 @Injectable()
-export class GetMistralModelSuggestionsUseCase {
-  private readonly logger = new Logger(GetMistralModelSuggestionsUseCase.name);
+export class GetModelSuggestionsUseCase {
+  private readonly logger = new Logger(GetModelSuggestionsUseCase.name);
 
   constructor(
-    private readonly mistralModelCatalog: MistralModelCatalog,
+    private readonly catalogRegistry: ProviderModelCatalogRegistry,
     private readonly modelsRepository: ModelsRepository,
     private readonly priceSuggestions: ModelPriceSuggestionService,
-    private readonly configService: ConfigService,
   ) {}
 
   @HandleUnexpectedErrors(UnexpectedModelError)
-  async execute(): Promise<ModelSuggestion[]> {
-    this.logger.log('execute');
-    const listings = await this.listModels();
+  async execute(provider: ModelProvider): Promise<ModelSuggestion[]> {
+    this.logger.log({ provider }, 'execute');
+    const catalog = this.catalogRegistry.find(provider);
+    if (!catalog) return [];
+    const listings = await this.listModels(provider, catalog);
     const [catalogNames, findPrice] = await Promise.all([
-      this.findCatalogNames(),
-      this.priceSuggestions.createMistralPriceLookup(),
+      this.findCatalogNames(provider),
+      this.priceSuggestions.createPriceLookup(provider),
     ]);
 
     return groupModelListings(listings)
@@ -51,29 +52,36 @@ export class GetMistralModelSuggestionsUseCase {
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  private async listModels(): Promise<ProviderModelListing[]> {
-    if (!this.configService.get<string>('models.mistral.apiKey')?.trim()) {
-      throw new ProviderModelListNotConfiguredError(ModelProvider.MISTRAL);
+  private async listModels(
+    provider: ModelProvider,
+    catalog: ProviderModelCatalog,
+  ): Promise<ProviderModelListing[]> {
+    if (!catalog.isConfigured()) {
+      throw new ProviderModelListNotConfiguredError(provider);
     }
     try {
-      return await this.mistralModelCatalog.list();
+      return await catalog.list();
     } catch (error) {
       this.logger.warn(
-        { error: error instanceof Error ? error.message : 'Unknown error' },
-        'Mistral could not list models',
+        {
+          provider,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        'Provider could not list models',
       );
-      throw new ProviderModelListFailedError(ModelProvider.MISTRAL);
+      throw new ProviderModelListFailedError(provider);
     }
   }
 
-  private async findCatalogNames(): Promise<Set<string>> {
+  private async findCatalogNames(
+    provider: ModelProvider,
+  ): Promise<Set<string>> {
     const models = await this.modelsRepository.findAll();
     return new Set(
       models
         .filter(
           (model) =>
-            model instanceof LanguageModel &&
-            model.provider === ModelProvider.MISTRAL,
+            model instanceof LanguageModel && model.provider === provider,
         )
         .map((model) => model.name),
     );

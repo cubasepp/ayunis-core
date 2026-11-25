@@ -658,15 +658,14 @@
         "outputCostPlaceholder": "e.g. 15",
         "dimensions": "Dimensions",
         "dimensionsPlaceholder": "Select dimensions",
-        "mistralModel": {
-          "label": "Mistral model",
+        "modelSuggestion": {
+          "label": "Model from provider list",
           "placeholder": "Select a model to prefill the form",
-          "loading": "Loading models…",
           "hint": "Choose a model or fill in the form yourself.",
           "inCatalog": "in catalog",
-          "priceEstimate": "Prices are estimates: models.dev list price in EUR plus Mistral's 10% regional surcharge. Check them before saving.",
+          "priceEstimate": "Prices are estimates: models.dev list price in EUR. Check them before saving.",
           "noPrice": "No price available. Enter the prices yourself.",
-          "notConfigured": "Set the Mistral API key to load the model list.",
+          "notConfigured": "Set the provider's API key to load the model list.",
           "loadFailed": "The model list could not be loaded. Fill in the form yourself."
         },
         "languageNamePlaceholder": "e.g. gpt-4",

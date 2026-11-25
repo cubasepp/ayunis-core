@@ -12,7 +12,7 @@ import { LanguageModelDescriptionField } from './LanguageModelDescriptionField';
 import { LanguageModelContextWindowSizeField } from './LanguageModelContextWindowSizeField';
 import { ModelPricingFields } from './ModelPricingFields';
 import { ModelCheckboxField } from './ModelCheckboxField';
-import { MistralModelPicker } from './MistralModelPicker';
+import { ModelSuggestionPicker } from './ModelSuggestionPicker';
 
 interface CreateLanguageModelDialogProps {
   open: boolean;
@@ -70,9 +70,11 @@ export function CreateLanguageModelDialog({
         'models.catalog.dialog.languageDisplayNamePlaceholder',
       )}
       providerExtras={
-        provider === 'mistral' && (
-          <MistralModelPicker form={form} disabled={isCreating} />
-        )
+        <ModelSuggestionPicker
+          provider={provider}
+          form={form}
+          disabled={isCreating}
+        />
       }
     >
       <LanguageModelTierField form={form} disabled={isCreating} />

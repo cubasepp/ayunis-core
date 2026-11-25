@@ -5,7 +5,9 @@ import type { ModelPrice } from 'src/domain/models/application/models/model-pric
 import { ModelProvider } from 'src/domain/models/domain/value-objects/model-provider.enum';
 
 // Mistral bills its regional endpoints, which chat requests use, at 1.1x list.
-const MISTRAL_REGIONAL_PRICE_FACTOR = 1.1;
+const PROVIDER_PRICE_FACTORS: Partial<Record<ModelProvider, number>> = {
+  [ModelProvider.MISTRAL]: 1.1,
+};
 const DECIMAL_FACTOR = 10_000;
 
 type PriceLookup = (identifiers: readonly string[]) => ModelPrice | undefined;
@@ -20,25 +22,23 @@ export class ModelPriceSuggestionService {
   ) {}
 
   /**
-   * Estimated EUR prices for Mistral models. Without a configured exchange rate
+   * Estimated EUR prices for a provider's models. Without a configured exchange rate
    * the public price list is not contacted at all. Prices are a convenience, so
    * an unreachable list yields no suggestion instead of an error.
    */
-  async createMistralPriceLookup(): Promise<PriceLookup> {
+  async createPriceLookup(provider: ModelProvider): Promise<PriceLookup> {
     const usdToEur = this.readExchangeRate();
     if (usdToEur === undefined) return () => undefined;
 
     let prices: ReadonlyMap<string, ModelPrice>;
     try {
-      prices = await this.modelPriceList.findUsdListPrices(
-        ModelProvider.MISTRAL,
-      );
+      prices = await this.modelPriceList.findUsdListPrices(provider);
     } catch (error) {
       this.logger.warn({ err: error as Error }, 'Model price list unavailable');
       return () => undefined;
     }
 
-    const factor = usdToEur * MISTRAL_REGIONAL_PRICE_FACTOR;
+    const factor = usdToEur * (PROVIDER_PRICE_FACTORS[provider] ?? 1);
     const convert = (usd: number): number =>
       Math.round(usd * factor * DECIMAL_FACTOR) / DECIMAL_FACTOR;
 

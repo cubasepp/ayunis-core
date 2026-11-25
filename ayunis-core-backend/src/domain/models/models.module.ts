@@ -61,9 +61,9 @@ import { AzureInferenceProviderFactory } from './infrastructure/inference-provid
 import { BedrockInferenceProviderFactory } from './infrastructure/inference-providers/bedrock.inference-provider';
 import { GeminiInferenceProviderFactory } from './infrastructure/inference-providers/gemini.inference-provider';
 import { LocalOllamaInferenceProviderFactory } from './infrastructure/inference-providers/local-ollama.inference-provider';
-import { GetMistralModelSuggestionsUseCase } from 'src/domain/models/application/use-cases/get-mistral-model-suggestions/get-mistral-model-suggestions.use-case';
+import { GetModelSuggestionsUseCase } from 'src/domain/models/application/use-cases/get-model-suggestions/get-model-suggestions.use-case';
 import { ModelPriceSuggestionService } from 'src/domain/models/application/services/model-price-suggestion.service';
-import { MistralModelCatalog } from 'src/domain/models/application/ports/mistral-model-catalog';
+import { ProviderModelCatalogRegistry } from 'src/domain/models/application/registry/provider-model-catalog.registry';
 import { ModelPriceList } from 'src/domain/models/application/ports/model-price-list';
 import { SdkMistralModelCatalog } from 'src/domain/models/infrastructure/model-catalogs/sdk-mistral-model-catalog';
 import { ModelsDevPriceList } from 'src/domain/models/infrastructure/price-lists/models-dev-price-list';
@@ -220,10 +220,19 @@ import { ResolveRecordingSummaryModelUseCase } from './application/use-cases/res
       ],
     },
     InferenceCallService,
-    { provide: MistralModelCatalog, useClass: SdkMistralModelCatalog },
+    SdkMistralModelCatalog,
+    {
+      provide: ProviderModelCatalogRegistry,
+      useFactory: (mistralCatalog: SdkMistralModelCatalog) => {
+        const registry = new ProviderModelCatalogRegistry();
+        registry.register(ModelProvider.MISTRAL, mistralCatalog);
+        return registry;
+      },
+      inject: [SdkMistralModelCatalog],
+    },
     { provide: ModelPriceList, useClass: ModelsDevPriceList },
     ModelPriceSuggestionService,
-    GetMistralModelSuggestionsUseCase,
+    GetModelSuggestionsUseCase,
     AzureImageGenerationHandler,
     MockImageGenerationHandler,
     {

@@ -16434,11 +16434,34 @@
         "tags": ["routines"]
       }
     },
-    "/super-admin/models/suggestions/mistral": {
+    "/super-admin/models/suggestions/{provider}": {
       "get": {
-        "description": "Lists the chat models of Mistral's EU endpoint with their capabilities and, if configured, an estimated price. Nothing is saved.",
-        "operationId": "SuperAdminModelSuggestionsController_getMistralModelSuggestions",
-        "parameters": [],
+        "description": "Lists the chat models a provider offers with their capabilities and, if configured, an estimated price. Empty for providers that cannot list their models. Nothing is saved.",
+        "operationId": "SuperAdminModelSuggestionsController_getModelSuggestions",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "openai",
+                "anthropic",
+                "bedrock",
+                "mistral",
+                "ollama",
+                "synaforce",
+                "ayunis",
+                "otc",
+                "azure",
+                "gemini",
+                "stackit",
+                "scaleway"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -16457,13 +16480,13 @@
             "description": "User not authenticated or not authorized as super admin"
           },
           "422": {
-            "description": "Mistral is not configured"
+            "description": "Provider is not configured"
           },
           "424": {
-            "description": "Mistral could not list models"
+            "description": "Provider could not list models"
           }
         },
-        "summary": "Get Mistral models to prefill a catalog entry",
+        "summary": "Get provider models to prefill a catalog entry",
         "tags": ["Super Admin Models"]
       }
     }
